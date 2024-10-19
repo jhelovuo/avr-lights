@@ -1,30 +1,39 @@
 #![no_std]
 #![no_main]
 
+use embedded_hal::delay::DelayNs;
 use panic_halt as _;
 
-#[arduino_hal::entry]
+// Define core clock. This can be used in the rest of the project.
+type CoreClock = atmega_hal::clock::MHz16;
+type Delay = atmega_hal::delay::Delay<crate::CoreClock>;
+
+// Below are examples of a delay helper functions
+fn delay_ms(ms: u16) {
+    Delay::new().delay_ms(u32::from(ms))
+}
+
+#[allow(dead_code)]
+fn delay_us(us: u32) {
+    Delay::new().delay_us(us)
+}
+
+#[avr_device::entry]
 fn main() -> ! {
-    let dp = arduino_hal::Peripherals::take().unwrap();
-    let pins = arduino_hal::pins!(dp);
+    let dp = atmega_hal::Peripherals::take().unwrap();
 
-    /*
-     * For examples (and inspiration), head to
-     *
-     *     https://github.com/Rahix/avr-hal/tree/main/examples
-     *
-     * NOTE: Not all examples were ported to all boards!  There is a good chance though, that code
-     * for a different board can be adapted for yours.  The Arduino Uno currently has the most
-     * examples available.
-     */
+    dp.PORTC.ddrc.write(|w| unsafe {w.bits(0xFF)});
 
-    let mut led = pins.d13.into_output();
-    let mut blue = pins.d12.into_output();
+    //let pins = atmega_hal::pins!(dp);
+
+    //let mut led = pins.pb7.into_output();
+    
+    let mut count: u8 = 0;
 
     loop {
-        led.toggle();
-        arduino_hal::delay_ms(250);
-        blue.toggle();
-        arduino_hal::delay_ms(250);
+        //led.toggle();
+        dp.PORTC.portc.write(|w| unsafe {w.bits(count)});
+        count = count.wrapping_add(1);
+        delay_ms(100);
     }
 }
