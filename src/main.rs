@@ -13,27 +13,18 @@ fn delay_ms(ms: u16) {
     Delay::new().delay_ms(u32::from(ms))
 }
 
-#[allow(dead_code)]
-fn delay_us(us: u32) {
-    Delay::new().delay_us(us)
-}
-
 #[avr_device::entry]
 fn main() -> ! {
     let dp = atmega_hal::Peripherals::take().unwrap();
 
+    // Set Data Direction Register C to all pins output.
     dp.PORTC.ddrc.write(|w| unsafe {w.bits(0xFF)});
-
-    //let pins = atmega_hal::pins!(dp);
-
-    //let mut led = pins.pb7.into_output();
     
-    let mut count: u8 = 0;
+    let mut my_byte = 0x01_u8;
 
     loop {
-        //led.toggle();
-        dp.PORTC.portc.write(|w| unsafe {w.bits(count)});
-        count = count.wrapping_add(1);
-        delay_ms(100);
+        dp.PORTC.portc.write(|w| unsafe {w.bits(my_byte)});
+        my_byte = my_byte.rotate_left(1);
+        delay_ms(400);
     }
 }
